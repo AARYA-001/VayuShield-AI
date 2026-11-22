@@ -29,7 +29,7 @@ app.use(corsMiddleware);
 app.use(express.json({ limit: '15kb' }));
 
 // 2. Health Endpoint
-app.get('/api/health', (_req: Request, res: Response) => {
+app.get(['/api/health', '/health'], (_req: Request, res: Response) => {
   res.status(200).json({
     status: 'ok',
     uptime: Math.round(process.uptime()),
@@ -39,7 +39,7 @@ app.get('/api/health', (_req: Request, res: Response) => {
 });
 
 // 3. Routine Insights Endpoint
-app.post('/api/routine-insights', aiRateLimiter, async (req: Request, res: Response) => {
+app.post(['/api/routine-insights', '/routine-insights'], aiRateLimiter, async (req: Request, res: Response) => {
   const { persona, zone, language = 'en' } = req.body;
   if (!validateZone(zone)) {
     return res.status(400).json({ error: 'Invalid zone telemetry payload or out-of-range values.' });
@@ -62,7 +62,7 @@ app.post('/api/routine-insights', aiRateLimiter, async (req: Request, res: Respo
 });
 
 // 4. Emergency Advisory Endpoint
-app.post('/api/emergency-advisory', aiRateLimiter, async (req: Request, res: Response) => {
+app.post(['/api/emergency-advisory', '/emergency-advisory'], aiRateLimiter, async (req: Request, res: Response) => {
   const { zone, language = 'en' } = req.body;
   if (!validateZone(zone)) {
     return res.status(400).json({ error: 'Invalid zone telemetry payload.' });
@@ -97,10 +97,11 @@ app.get('*splat', (_req: Request, res: Response) => {
 app.use(safeErrorHandler);
 
 // 7. Server Listener
-if (process.env.NODE_ENV !== 'test') {
+if (process.env.NODE_ENV !== 'test' && !process.env.VERCEL) {
   app.listen(PORT, () => {
     console.log(`[VayuShield AI] Backend listening on port ${PORT}`);
   });
 }
 
+export default app;
 export { insightCache, hashPayload, aiRateLimiter };
